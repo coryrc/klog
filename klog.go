@@ -27,6 +27,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// Verbosity, 0-10 level of logging
+var Verbosity = 10
+
 // Level is a shim
 type Level int32
 
@@ -40,23 +43,29 @@ func Flush() {
 
 // V is a shim
 func V(level Level) Verbose {
-	return Verbose(zap.L().Core().Enabled(zap.DebugLevel))
+	return Verbose(int(level) <= Verbosity && zap.L().Core().Enabled(zap.DebugLevel))
 }
 
 // Info is a shim
 func (v Verbose) Info(args ...interface{}) {
-	zap.S().Debug(args...)
+	if v {
+		zap.S().Debug(args...)
+	}
 }
 
 // Infoln is a shim
 func (v Verbose) Infoln(args ...interface{}) {
-	s := fmt.Sprint(args...)
-	zap.S().Debug(s, "\n")
+	if v {
+		s := fmt.Sprint(args...)
+		zap.S().Debug(s, "\n")
+	}
 }
 
 // Infof is a shim
 func (v Verbose) Infof(format string, args ...interface{}) {
-	zap.S().Debugf(format, args...)
+	if v {
+		zap.S().Debugf(format, args...)
+	}
 }
 
 // Info is a shim
