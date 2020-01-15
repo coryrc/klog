@@ -24,6 +24,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 
 	"go.uber.org/zap"
 )
@@ -41,6 +42,21 @@ func InitFlags(flagset *flag.FlagSet) {
 
 // Level is a shim
 type Level int32
+
+// Get is part of the flag.Value interface.
+func (l *Level) Get() interface{} {
+	return *l
+}
+
+// Used to set global verbosity level
+func (l *Level) Set(value string) error {
+	v, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return err
+	}
+
+	verbosity = v
+}
 
 // Verbose is a shim
 type Verbose bool
