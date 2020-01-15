@@ -55,7 +55,8 @@ func (l *Level) Set(value string) error {
 		return err
 	}
 
-	verbosity = v
+	verbosity = int(v)
+	return nil
 }
 
 // Verbose is a shim
