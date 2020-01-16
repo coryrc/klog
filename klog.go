@@ -69,7 +69,10 @@ func Flush() {
 
 // V is a shim
 func V(level Level) Verbose {
-	return Verbose(int(level) <= verbosity && zap.L().Core().Enabled(zap.DebugLevel))
+	l := int(level)
+	v := verbosity
+	isEnabled := zap.L().Core().Enabled(zap.DebugLevel)
+	return Verbose(l <= v && isEnabled)
 }
 
 // Info is a shim
