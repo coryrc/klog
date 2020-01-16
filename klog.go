@@ -25,11 +25,12 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 
 	"go.uber.org/zap"
 )
 
-var verbosity = 10
+var verbosity Level
 
 // InitFlags is for explicitly initializing the flags.
 func InitFlags(flagset *flag.FlagSet) {
@@ -37,17 +38,33 @@ func InitFlags(flagset *flag.FlagSet) {
 		return
 	}
 
-	flagset.IntVar(&verbosity, "v", 10, "level 0-10 of verbosity, increasing")
+	flagset.Var(&verbosity, "v", "level 0-10 of verbosity, increasing")
 }
+
+func init() {
+	verbosity.Set("10")
+}
+
+var mu sync.Mutex
 
 // Level is a shim
 type Level int32
 
+// String is part of the flag.Value interface.
+func (l *Level) String() string {
+	mu.Lock()
+	defer mu.Unlock()
+	return strconv.FormatInt(int64(*l), 10)
+}
+
 // Get is part of the flag.Value interface.
 func (l *Level) Get() interface{} {
+	mu.Lock()
+	defer mu.Unlock()
 	return *l
 }
 
+// Set is part of the flag.Value interface.
 // Used to set global verbosity level
 func (l *Level) Set(value string) error {
 	v, err := strconv.ParseInt(value, 10, 32)
@@ -55,7 +72,9 @@ func (l *Level) Set(value string) error {
 		return err
 	}
 
-	verbosity = int(v)
+	mu.Lock()
+	defer mu.Unlock()
+	*l = Level(v)
 	return nil
 }
 
@@ -69,10 +88,10 @@ func Flush() {
 
 // V is a shim
 func V(level Level) Verbose {
-	l := int(level)
-	v := verbosity
 	isEnabled := zap.L().Core().Enabled(zap.DebugLevel)
-	return Verbose(l <= v && isEnabled)
+	mu.Lock()
+	defer mu.Unlock()
+	return Verbose(level <= verbosity && isEnabled)
 }
 
 // Info is a shim
